@@ -42,16 +42,19 @@
 
 (defn next-cell-state [coord]
   (let [current (get state coord)
-        life-count (get-life-count)]
+        life-count (get-life-count (get-neighbors coord))]
     (cond
       (= life-count 3) 1
       
-      (if (and
-            (= 1 current)
-            (#{2 3} life-count))) 1
+      (and
+        (= 1 current)
+        (#{2 3} life-count)) 1
       
-      (if (and
-            (= 1 current)
-            (< life-count 2))) 0
+      (and
+        (= 1 current)
+        (< life-count 2)) 0
       
       (> 3 life-count) 0)))
+
+(doall (for [[coords state] state]
+         (println coords state)))

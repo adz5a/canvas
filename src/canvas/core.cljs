@@ -1,5 +1,6 @@
 (ns canvas.core
-    (:require [reagent.core :as reagent :refer [atom]]))
+    (:require [reagent.core :as reagent :refer [atom]]
+              [canvas.life :as life]))
 
 (enable-console-print!)
 
