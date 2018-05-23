@@ -1,5 +1,7 @@
 (ns canvas.core
-  (:require ))
+  (:require [canvas.shape :refer [line
+                                  rotate
+                                  draw!]]))
 
 (enable-console-print!)
 
@@ -7,11 +9,10 @@
 
 (defonce app-state (atom {}))
 
-(defonce canvas (.createElement js/document "canvas"))
+(defonce canvas (.getElementById js/document "canvas"))
+(defonce output (.getElementById js/document "output"))
 
 (defonce ctx (.getContext canvas "2d"))
-
-(defonce insert-canvas (.appendChild (.-body js/document) canvas))
 
 (set! (-> canvas
           (.-style)
@@ -46,11 +47,7 @@
                (- y-e off-y)]]
     (println x y)))
 
-(defn rotate [[x y] a]
-  (let [c (.cos js/Math a)
-        s (.sin js/Math a)]
-    [(+ (* c x) (* s y))
-     (- (* s x) (* c y))]))
+
 
 (defonce on-click (fn [event]
                     (click-handler event)))
@@ -64,66 +61,80 @@
     (.clearRect ctx 0 0 w h)))
 
 
-(defn draw-line!
-  [line ctx]
-  (let [[x y] line]
-    (doto ctx
-      (.beginPath)
-      (.moveTo 0 0)
-      (.lineTo x y)
-      (.stroke))))
 
 (def PI (.-PI js/Math))
 
-(clear! ctx)
-(def l [100 0])
 
 (def PI|3 (/ PI 3))
-(def line-seq (list
-                (rotate l PI|3)
-                (rotate (rotate l PI|3) PI|3)))
 
+(defn vector-diff [v1 v2]
+  (apply vector (map - v2 v1)))
+
+(defn vector-add [v1  v2]
+  (apply vector (map + v1 v2)))
+
+(defn vector-rotate [[x y] a]
+  (let [c (.cos js/Math a)
+        s (.sin js/Math a)]
+    [(+ (* c x) (* s y))
+     (- (* s x) (* c y))])) 
 
 ; (draw-line! (rotate l (/ PI 3)) ctx)
 
-(defprotocol IDrawable
-  (draw! [this ctx])
-  (draw-rotation! [this a ctx]))
-
-(defrecord Line [from direction]
-
-  IDrawable
-  (draw! [this ctx]
-    (let [{:keys [from direction]} this
-          [x0 y0] from
-          [x y] direction]
-      (doto ctx
-        (.moveTo x0 y0)
-        (.lineTo (+ x0 x) (+ y0 y))))
-    ctx)
-
-  (draw-rotation! [{:keys [from direction] :as this}
-                   a
-                   ctx]
-    (draw! (assoc this :direction (rotate direction a))
-           ctx)))
-
-(defn line
-  ([direction]
-   (->Line [0 0] direction))
-  ([from direction]
-   (->Line from direction)))
-
-(def start [50 50])
-(.beginPath ctx)
-
-(draw-rotation! 
-  (line [250 250] [100 100])
-  PI|3
+(defn begin-path [ctx]
+  (.beginPath ctx)
   ctx)
 
-(.stroke ctx)
+(defn move-to [ctx [x y]]
+  (.moveTo ctx x y)
+  ctx)
 
+(defn line-to [ctx [x y]]
+  (.lineTo ctx x y)
+  ctx)
+
+(defn stroke
+  ([ctx]
+   (.stroke ctx)
+   ctx)
+  ([ctx style]
+   (let [prev-style (.-strokeStyle ctx)]
+     (set! (.-strokeStyle ctx) style)
+     (.stroke ctx)
+     (set! (.-strokeStyle ctx) prev-style)
+     ctx)))
+
+(def start [50 50])
+(def dir [100 0])
+
+(doto ctx
+  (begin-path)
+  (move-to start)
+  (line-to (vector-add start dir))
+  (stroke "red")
+  
+  (begin-path)
+  (move-to start)
+  (line-to (vector-add start
+                       (vector-rotate dir
+                                      (/ PI 2))))
+  (stroke "blue")
+
+  (begin-path)
+  (move-to start)
+  (line-to (vector-add start
+                       (vector-rotate dir
+                                      (/ PI 4))))
+  (stroke "black")
+
+  (begin-path)
+  (move-to start)
+  (line-to (vector-add start
+                       (vector-rotate dir
+                                      (/ PI 3))))
+  (stroke "green")
+  
+  )
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
