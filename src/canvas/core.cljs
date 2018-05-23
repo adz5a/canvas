@@ -1,7 +1,9 @@
 (ns canvas.core
-  (:require [canvas.shape :refer [line
-                                  rotate
-                                  draw!]]))
+  (:require [canvas.operations 
+             :as op
+             :refer [add
+                     diff
+                     rotate]]))
 
 (enable-console-print!)
 
@@ -39,13 +41,21 @@
                               :offset [(.-x offsets)
                                        (.-y offsets)]))))
 
+(defn set-output! [text]
+  (set! (.-textContent output) text))
+
 (defn click-handler [e]
   (let [x-e (.-clientX e)
         y-e (.-clientY e)
         [off-x off-y] (:offset @app-state)
         [x y] [(- x-e off-x)
                (- y-e off-y)]]
-    (println x y)))
+    (set-output! (str x "-" y))
+    (doto ctx
+      (op/begin-path)
+      (op/move-to [250 250])
+      (op/line-to [x y])
+      (op/stroke))))
 
 
 
@@ -67,72 +77,40 @@
 
 (def PI|3 (/ PI 3))
 
-(defn vector-diff [v1 v2]
-  (apply vector (map - v2 v1)))
-
-(defn vector-add [v1  v2]
-  (apply vector (map + v1 v2)))
-
-(defn vector-rotate [[x y] a]
-  (let [c (.cos js/Math a)
-        s (.sin js/Math a)]
-    [(+ (* c x) (* s y))
-     (- (* s x) (* c y))])) 
 
 ; (draw-line! (rotate l (/ PI 3)) ctx)
 
-(defn begin-path [ctx]
-  (.beginPath ctx)
-  ctx)
 
-(defn move-to [ctx [x y]]
-  (.moveTo ctx x y)
-  ctx)
-
-(defn line-to [ctx [x y]]
-  (.lineTo ctx x y)
-  ctx)
-
-(defn stroke
-  ([ctx]
-   (.stroke ctx)
-   ctx)
-  ([ctx style]
-   (let [prev-style (.-strokeStyle ctx)]
-     (set! (.-strokeStyle ctx) style)
-     (.stroke ctx)
-     (set! (.-strokeStyle ctx) prev-style)
-     ctx)))
 
 (def start [50 50])
 (def dir [100 0])
 
 (doto ctx
-  (begin-path)
-  (move-to start)
-  (line-to (vector-add start dir))
-  (stroke "red")
+  (op/begin-path)
+  (op/move-to start)
+  (op/line-to (add start dir))
+  (op/stroke "red")
   
-  (begin-path)
-  (move-to start)
-  (line-to (vector-add start
-                       (vector-rotate dir
+  (op/begin-path)
+  (op/move-to start)
+  (op/line-to (add start
+                       (rotate dir
                                       (/ PI 2))))
-  (stroke "blue")
+  (op/stroke "blue")
 
-  (begin-path)
-  (move-to start)
-  (line-to (vector-add start
-                       (vector-rotate dir
+  (op/begin-path)
+  (op/move-to start)
+  (op/line-to (add start
+                       (rotate dir
                                       (/ PI 4))))
-  (stroke "black")
+  (op/stroke "black")
 
-  (begin-path)
-  (move-to start)
-  (line-to (vector-add start
-                       (vector-rotate dir
+  (op/begin-path)
+  (op/move-to start)
+  (op/line-to (add start
+                       (rotate dir
                                       (/ PI 3))))
-  (stroke "green")
+  (op/stroke "green")
   
   )
 
